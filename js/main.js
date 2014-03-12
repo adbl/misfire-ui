@@ -29,41 +29,56 @@ function ViewModel() {
                 "{measures.id}", measure.id())
         }
 
-        // TODO use underscore iteration
         _.forEach(data.measures, function(measure) {
-            current_value = _.find(data.linked.values, function (value) {
+            value = _.find(data.linked.values, function (value) {
                 return _.has(measure, "links") &&
                     _.has(measure.links, "current_value") &&
                     measure.links.current_value == value.id
             });
-            if (current_value)
-                current_timestamp = current_value.timestamp;
-            else
+            if (value) {
+                current_timestamp = value.timestamp;
+                current_value = value.value;
+            } else {
                 current_timestamp = null;
+                current_value = null;
+            }
 
             measure = {
                 id: ko.observable(measure.id),
                 name: ko.observable(measure.name),
                 type: ko.observable(measure.type),
-                current_timestamp: ko.observable(current_timestamp)
+                current_timestamp: ko.observable(current_timestamp),
+                current_value: ko.observable(current_value),
             };
             measure.updated = ko.computed(function() {
                 ts = measure.current_timestamp()
                 if (ts) return moment(new Date(ts)).fromNow();
-                else return "never"
+                else return "never";
+            });
+            measure.is_active = ko.computed(function() {
+                return measure.type() == "duration" &&
+                    measure.current_value() == true;
             });
             self.measures.push(measure);
         });
     });
 
     self.doMeasure = function(measure, event) {
-        console.log("doMeasure: " + measure.name());
-        data = {"values": [{"value": 1,
+        switch(measure.type()) {
+        case "event":
+            value = 1;
+            break;
+        case "duration":
+            value = !measure.current_value();
+            break;
+        }
+        data = {"values": [{"value": value,
                             "timestamp": (new Date()).toISOString()}]};
         // TODO handle error
         self.ajax(self.measure_values_uri(measure), 'POST', data).done(
             function(data) {
                 measure.current_timestamp(data.values[0].timestamp);
+                measure.current_value(data.values[0].value);
             }
         );
     }

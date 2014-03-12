@@ -26,7 +26,10 @@
       <div class="btn-group btn-group-justified">
         <div class="btn-group">
           <p class="text-right">
-            <button data-bind="click: $parent.doMeasure" type="button" class="btn btn-primary btn-lg" data-toggle="button">
+            <button data-bind="click: $parent.doMeasure, css: { 'active btn-info': is_active(), 'btn-primary': !is_active() }"
+                    type="button" class="btn btn-lg">
+              <span data-bind="visible: type() == 'event'" class="glyphicon glyphicon-ok-circle"></span>
+              <span data-bind="visible: type() == 'duration'" class="glyphicon glyphicon-time"></span>
               <span data-bind="text: name"> </span>
             </button>
             <br/>
@@ -39,7 +42,6 @@
       <p>
         <button data-bind="click: beginAdd" type="button" class="btn btn-primary">Add</button>
       </p>
-
     </div>
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
