@@ -1,7 +1,7 @@
 function ViewModel() {
     var self = this;
-    self.uri = 'http://localhost:4000/counters';
-    self.counters = ko.observableArray();
+    self.uri = 'http://localhost:4000/measures';
+    self.measures = ko.observableArray();
     self.values_uri_template = null;
 
     self.ajax = function(uri, method, data) {
@@ -24,27 +24,46 @@ function ViewModel() {
     }
 
     self.ajax(self.uri, 'GET').done(function(data) {
-        self.counter_values_uri = function(counter) {
-            return data.links['counters.values'].replace(
-                "{counters.id}", counter.id())
+        self.measure_values_uri = function(measure) {
+            return data.links['measures.values'].href.replace(
+                "{measures.id}", measure.id())
         }
 
-        for (var i = 0; i < data.counters.length; i++) {
-            self.counters.push({
-                id: ko.observable(data.counters[i].id),
-                name: ko.observable(data.counters[i].name),
-                type: ko.observable(data.counters[i].type)
+        // TODO use underscore iteration
+        _.forEach(data.measures, function(measure) {
+            current_value = _.find(data.linked.values, function (value) {
+                return _.has(measure, "links") &&
+                    _.has(measure.links, "current_value") &&
+                    measure.links.current_value == value.id
             });
-        }
+            if (current_value)
+                current_timestamp = current_value.timestamp;
+            else
+                current_timestamp = null;
+
+            measure = {
+                id: ko.observable(measure.id),
+                name: ko.observable(measure.name),
+                type: ko.observable(measure.type),
+                current_timestamp: ko.observable(current_timestamp)
+            };
+            measure.updated = ko.computed(function() {
+                ts = measure.current_timestamp()
+                if (ts) return moment(new Date(ts)).fromNow();
+                else return "never"
+            });
+            self.measures.push(measure);
+        });
     });
 
-    self.doCount = function(counter) {
-        console.log("doCount: " + counter.name());
-        data = {"values": [
-            {"value": 1, "timestamp": (new Date).toISOString()}]};
-        self.ajax(self.counter_values_uri(counter), 'POST', data).done(
+    self.doMeasure = function(measure, event) {
+        console.log("doMeasure: " + measure.name());
+        data = {"values": [{"value": 1,
+                            "timestamp": (new Date()).toISOString()}]};
+        // TODO handle error
+        self.ajax(self.measure_values_uri(measure), 'POST', data).done(
             function(data) {
-                console.log(data);
+                measure.current_timestamp(data.values[0].timestamp);
             }
         );
     }

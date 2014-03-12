@@ -8,7 +8,7 @@
 
     <!-- Bootstrap -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
-    <!-- <link href="css/bootstrap-theme.min.css" rel="stylesheet"> -->
+    <link href="css/bootstrap-theme.min.css" rel="stylesheet">
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -20,15 +20,17 @@
   <body>
     <div id="main" class="container">
       <h1>Misfire</h1>
-      <p class="lead">Start counting!</p>
+      <p class="lead">Start measuring!</p>
 
-      <!-- ko foreach: counters -->
+      <!-- ko foreach: measures -->
       <div class="btn-group btn-group-justified">
         <div class="btn-group">
-          <p>
-            <button data-bind="click: $parent.doCount" type="button" class="btn btn-primary btn-lg">
-              <span data-bind="text: name"></span>
+          <p class="text-right">
+            <button data-bind="click: $parent.doMeasure" type="button" class="btn btn-primary btn-lg" data-toggle="button">
+              <span data-bind="text: name"> </span>
             </button>
+            <br/>
+            <span data-bind="text: updated"></span>
           </p>
         </div>
       </div>
@@ -46,6 +48,7 @@
     <script src="js/bootstrap.min.js"></script>
     <script src="js/knockout-3.0.0.js"></script>
     <script src="js/lodash.min.js"></script>
+    <script src="js/moment.min.js"></script>
 
     <script src="js/main.js"></script>
   </body>
