@@ -1,29 +1,30 @@
-function ViewModel() {
+ajax = function(uri, method, data) {
+    var request = {
+        url: uri,
+        type: method,
+        // accepts: accept,
+        contentType: "application/vnd.api+json",
+        cache: false,
+        data: JSON.stringify(data),
+        // dataType: 'json',
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.log(textStatus + "\n" + errorThrown + "\n\n" +
+                        jqXHR.status + " " + jqXHR.statusText + "\n" +
+                        jqXHR.getAllResponseHeaders() + "\n" +
+                        jqXHR.responseText);
+        }
+    };
+    return $.ajax(request);
+};
+
+
+function ActivitiesViewModel() {
     var self = this;
     self.uri = 'http://localhost:4000/measures';
     self.measures = ko.observableArray();
     self.values_uri_template = null;
 
-    self.ajax = function(uri, method, data) {
-        var request = {
-            url: uri,
-            type: method,
-            // accepts: accept,
-            contentType: "application/vnd.api+json",
-            cache: false,
-            data: JSON.stringify(data),
-            // dataType: 'json',
-            error: function(jqXHR, textStatus, errorThrown) {
-                console.log(textStatus + "\n" + errorThrown + "\n\n" +
-                            jqXHR.status + " " + jqXHR.statusText + "\n" +
-                            jqXHR.getAllResponseHeaders() + "\n" +
-                            jqXHR.responseText);
-            }
-        };
-        return $.ajax(request);
-    }
-
-    self.ajax(self.uri, 'GET').done(function(data) {
+    ajax(self.uri, 'GET').done(function(data) {
         self.measure_values_uri = function(measure) {
             return data.links['measures.values'].href.replace(
                 "{measures.id}", measure.id())
@@ -75,7 +76,7 @@ function ViewModel() {
         data = {"values": [{"value": value,
                             "timestamp": (new Date()).toISOString()}]};
         // TODO handle error
-        self.ajax(self.measure_values_uri(measure), 'POST', data).done(
+        ajax(self.measure_values_uri(measure), 'POST', data).done(
             function(data) {
                 measure.current_timestamp(data.values[0].timestamp);
                 measure.current_value(data.values[0].value);
@@ -86,4 +87,28 @@ function ViewModel() {
         console.log("beginAdd");
     }
 }
-ko.applyBindings(new ViewModel(), $('#main')[0]);
+
+
+function AddActivityViewModel() {
+    var self = this;
+    self.uri = 'http://localhost:4000/measures';
+    self.name = ko.observable();
+    self.type = ko.observable();
+
+
+    self.addActivity = function() {
+        console.log(self.name());
+        console.log(self.type());
+        data = {
+            "measures": [{"name": self.name(),
+                          "type": self.type()}]
+        };
+        ajax(self.uri, 'POST', data).done(function(data) {
+            console.log(data);
+        });
+    }
+}
+
+
+ko.applyBindings(new ActivitiesViewModel(), $('#main')[0]);
+ko.applyBindings(new AddActivityViewModel(), $('#add-activity')[0]);;
