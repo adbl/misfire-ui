@@ -94,9 +94,14 @@ function AddActivityViewModel() {
     self.uri = 'http://localhost:4000/measures';
     self.name = ko.observable();
     self.type = ko.observable();
-
+    self.name_error = ko.observable(false);
+    self.type_error = ko.observable(false);
 
     self.addActivity = function() {
+        self.name_error(!self.name());
+        self.type_error(!self.type());
+        if (self.name_error() || self.type_error()) return;
+
         console.log(self.name());
         console.log(self.type());
         data = {
@@ -107,8 +112,17 @@ function AddActivityViewModel() {
             console.log(data);
         });
     }
+    self.cancelAdd = function() {
+        self.name_error(false);
+        self.type_error(false);
+    }
 }
 
-
+var add_activity_model = new AddActivityViewModel();
 ko.applyBindings(new ActivitiesViewModel(), $('#main')[0]);
-ko.applyBindings(new AddActivityViewModel(), $('#add-activity')[0]);;
+ko.applyBindings(add_activity_model, $('#add-activity')[0]);
+
+// bootstrap javascript event -> knockout model
+$('#add-activity').on('hidden.bs.modal', function (e) {
+    add_activity_model.cancelAdd();
+});
