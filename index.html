@@ -3,14 +3,19 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=0.725"><!-- , maximum-scale=1, user-scalable=no -->
+
+    <!-- <meta name="apple-mobile-web-app-capable" content="yes"> -->
+    <!-- <meta name="apple-mobile-web-app-status-bar-style" content="black"> -->
+
     <title>Misfire</title>
 
     <!-- Bootstrap -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
-    <!-- <link href="css/bootstrap-theme.min.css" rel="stylesheet"> -->
+    <link href="css/bootstrap-theme.min.css" rel="stylesheet">
     <!-- <link rel="stylesheet" href="css/bootflat.min.css"/> -->
     <link href="css/style.css" rel="stylesheet">
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -19,7 +24,6 @@
     <![endif]-->
   </head>
   <body>
-
 
     <!-- navbar-fixed-top AND body { padding-top: 70px; } -->
     <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
@@ -46,19 +50,19 @@
     </nav>
 
     <div id="main" class="container">
-      <!-- ko foreach: measures -->
-      <div class="btn-group-justified">
-        <div class="btn-group">
+      <div data-bind="foreach: measures" class="row">
+        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+          <div class="activity-icon">
+            <i data-bind="visible: type() == 'event'" class="fa fa-check-circle-o"></i>
+            <i data-bind="visible: type() == 'duration'" class="fa fa-clock-o"></i>
+          </div>
           <button data-bind="click: $parent.doMeasure, css: { active: is_active() }"
-                  type="button" class="btn btn-lg btn-primary">
-            <span data-bind="visible: type() == 'event'" class="glyphicon glyphicon-ok-circle"></span>
-            <span data-bind="visible: type() == 'duration'" class="glyphicon glyphicon-time"></span>
-            <span data-bind="text: name"> </span>
+                  type="button" class="btn btn-primary btn-lg col-xs-9 activity-btn">
+            <span data-bind="text: name"></span>
           </button>
+          <p data-bind="text: updated" class="text-right"></p>
         </div>
       </div>
-      <p data-bind="text: updated" class="text-right"></p>
-      <!-- /ko -->
     </div>
 
     <div class="modal fade" id="add-activity" tabindex="-1" role="dialog" aria-labelledby="add-activity-label" aria-hidden="true">
