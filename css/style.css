@@ -7,3 +7,22 @@
   line-height: 1.5;
   border-radius: 45px;
 }
+
+.dbg-cell {
+    border: solid red 1px;
+}
+
+.activity-btn {
+    width: -moz-calc(100% - 40px);
+    width: -webkit-calc(100% - 40px);
+    width: calc(100% - 40px);
+ }
+
+.activity-icon {
+    font-size: 32px;
+    width: 30px;
+    line-height: 43px;
+    margin: 0px 10px 0px 0px;
+    text-align: right;
+    float: left;
+}
