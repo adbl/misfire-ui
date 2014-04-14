@@ -20,17 +20,17 @@ ajax = function(uri, method, data) {
 
 function ActivitiesViewModel() {
     var self = this;
-    self.uri = 'http://localhost:4000/measures';
-    self.measures = ko.observableArray();
+    self.uri = 'http://localhost:4000/api/activities';
+    self.activities = ko.observableArray();
     self.values_uri_template = null;
 
     ajax(self.uri, 'GET').done(function(data) {
         self.measure_values_uri = function(measure) {
-            return data.links['measures.values'].href.replace(
-                "{measures.id}", measure.id())
+            return data.links['activities.values'].href.replace(
+                "{activities.id}", measure.id())
         }
 
-        _.forEach(data.measures, function(measure) {
+        _.forEach(data.activities, function(measure) {
             value = _.find(data.linked.values, function (value) {
                 return _.has(measure, "links") &&
                     _.has(measure.links, "current_value") &&
@@ -60,11 +60,11 @@ function ActivitiesViewModel() {
                 return measure.type() == "duration" &&
                     measure.current_value() == true;
             });
-            self.measures.push(measure);
+            self.activities.push(measure);
         });
     });
 
-    self.doMeasure = function(measure, event) {
+    self.doActivity = function(measure, event) {
         switch(measure.type()) {
         case "event":
             value = 1;
@@ -91,7 +91,7 @@ function ActivitiesViewModel() {
 
 function AddActivityViewModel() {
     var self = this;
-    self.uri = 'http://localhost:4000/measures';
+    self.uri = 'http://localhost:4000/api/activities';
     self.name = ko.observable();
     self.type = ko.observable();
     self.name_error = ko.observable(false);
@@ -105,8 +105,8 @@ function AddActivityViewModel() {
         console.log(self.name());
         console.log(self.type());
         data = {
-            "measures": [{"name": self.name(),
-                          "type": self.type()}]
+            "activities": [{"name": self.name(),
+                            "type": self.type()}]
         };
         ajax(self.uri, 'POST', data).done(function(data) {
             console.log(data);
