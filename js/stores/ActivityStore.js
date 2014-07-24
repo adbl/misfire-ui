@@ -13,12 +13,14 @@ function uuid(prefix) {
 
 var _activities = {};
 
-function newActivity(name, type) {
+function newActivity(name, type, value, predefined) {
     var id = uuid(name)
     var newActivity = {
         id: id,
         name: name,
-        type: type
+        type: type,
+        value: value,
+        predefined: predefined
     }
     console.debug("[sync-queue] newActivity: " + JSON.stringify(newActivity));
     // TODO add to sync queue
@@ -75,7 +77,7 @@ AppDispatcher.register(function(payload) {
 
   switch(action.actionType) {
     case ActivityConstants.NEW_ACTIVITY:
-      newActivity(action.name, action.type);
+      newActivity(action.name, action.type, action.value, action.predefined);
       ActivityStore.emitChange();
       break;
     case ActivityConstants.ADD_VALUE:
