@@ -2,6 +2,7 @@
 
 var React = require('react');
 var ActivityActions = require('../actions/ActivityActions');
+var moment = require('moment');
 
 /**
  * TODO:
