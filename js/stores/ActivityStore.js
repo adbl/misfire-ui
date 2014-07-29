@@ -2,19 +2,14 @@ var AppDispatcher = require('../dispatcher/AppDispatcher');
 var EventEmitter = require('events').EventEmitter;
 var ActivityConstants = require('../constants/ActivityConstants');
 var merge = require('react/lib/merge');
+var uuid = require('uuid');
 
 var CHANGE_EVENT = 'change';
-
-// TODO get real uuid library
-function uuid(prefix) {
-    return String(prefix) + "-" + (Math.random() * Math.pow(10, 16)).toFixed()
-        + "-" + String(Date.now());
-}
 
 var _activities = {};
 
 function newActivity(name, type, value, predefined) {
-    var id = uuid(name)
+    id = uuid.v4();
     var newActivity = {
         id: id,
         name: name,
@@ -30,7 +25,7 @@ function newActivity(name, type, value, predefined) {
 function addValue(activityId, timestamp, value) {
     var activity = _activities[activityId];
     var newValue = {
-        id: uuid(activityId),
+        id: uuid.v4(),
         timestamp: timestamp,
         value: value
     };
