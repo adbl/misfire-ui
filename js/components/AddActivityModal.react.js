@@ -3,12 +3,14 @@
 var React = require('react');
 var BootstrapModalMixin = require('./BootstrapModalMixin.react');
 var FormMixin = require('./FormMixin.react');
+var Constants = require('../constants/ActivityConstants');
 
 var BsSelectButton = React.createClass({
 
     propTypes: {
-        name: React.PropTypes.string,
+        name: React.PropTypes.string.isRequired,
         onSelected: React.PropTypes.func.isRequired,
+        // TODO
         // selectedValue (isSelected)
         // value: React.PropTypes.any?
         className: React.PropTypes.string,
@@ -45,6 +47,37 @@ var BsSelectButton = React.createClass({
         return false;
     }
 
+});
+
+var BsSelectGlyphicon = React.createClass({
+
+    propTypes: {
+        name: React.PropTypes.string,
+        onSelect: React.PropTypes.func.isRequired,
+        // TODO
+        // selectedValue:
+        // value:
+        icon: React.PropTypes.string.isRequired
+    },
+
+    render: function() {
+        isSelected = this.props.selectedValue === this.props.value;
+        return (
+            <label className=
+                 {"btn btn-circle center-block" +
+                  (isSelected ? " btn-primary" : " btn-default")}>
+                <span className={"glyphicon " + this.props.icon
+                                 + (isSelected ? "" : " text-primary")} />
+                <input type="radio" name={this.props.name}
+                     value={this.props.value} className="hidden"
+                     onClick={this._handleOnClick} />
+            </label>
+        )
+    },
+
+    _handleOnClick: function() {
+        this.props.onSelect(this);
+    }
 });
 
 var LABEL = "label";
@@ -164,17 +197,11 @@ var AddActivityModal = React.createClass({
                       <div className="row">
                         <div className="col-xs-6">
                           <div>
-                            <label className=
-                                 {"btn btn-circle center-block" +
-                                  (type.value == 'event' ? " btn-primary"
-                                   : " btn-default text-primary")}>
-                              <span className={"glyphicon glyphicon-ok-circle" +
-                                               (type.value == "event" ? ""
-                                                : " text-primary")} />
-                              <input type="radio" name="type"
-                                     value="event" className="hidden"
-                                     onClick={this._handleTypeClick} />
-                            </label>
+                            <BsSelectGlyphicon name="type"
+                                value={Constants.TYPE_EVENT}
+                                selectedValue={type.value}
+                                icon="glyphicon-ok-circle"
+                                onSelect={this._handleValueSelected} />
                             <br />
                           </div>
                           <div>
@@ -184,17 +211,11 @@ var AddActivityModal = React.createClass({
 
                         <div className="col-xs-6">
                           <div>
-                            <label className=
-                                 {"btn btn-circle center-block" +
-                                  (type.value == 'timer' ? " btn-primary"
-                                   : " btn-default")}>
-                              <span className={"glyphicon glyphicon-time"
-                                               + (type.value == "timer" ?
-                                                  "" : " text-primary")} />
-                              <input type="radio" name="type"
-                                     value="timer" className="hidden"
-                                     onClick={this._handleTypeClick} />
-                            </label>
+                            <BsSelectGlyphicon name="type"
+                                value={Constants.TYPE_TIMER}
+                                selectedValue={type.value}
+                                icon="glyphicon-time"
+                                onSelect={this._handleValueSelected} />
                             <br />
                        </div>
                           <div>
@@ -205,7 +226,7 @@ var AddActivityModal = React.createClass({
                     </div>
 
                     <div className={"form-group" + (
-                        type.value == "event" ? "" : " hidden")}>
+                        type.value == Constants.TYPE_EVENT ? "" : " hidden")}>
                       <label className="control-label h3">Event Value</label>
                       <p>Do you want to assign a certain kind of value each time it is activated?</p>
 
@@ -248,7 +269,7 @@ var AddActivityModal = React.createClass({
 
 
                     <div className={"form-group" + (
-                        type.value == "timer" ? "" : " hidden")}>
+                        type.value == Constants.TYPE_TIMER ? "" : " hidden")}>
                       <label className="control-label h3">Timer Value</label>
                       <p>What kind of value should be assigned when it is activated?</p>
 
@@ -343,10 +364,10 @@ var AddActivityModal = React.createClass({
     _computeValue: function(update) {
         // TODO getValue("...")
         var type = update.type || this.getField("type").value;
-        if (type == "event") {
+        if (type == Constants.TYPE_EVENT) {
             return update.eventValue || this.getField("eventValue").value;
         }
-        else if (type == "timer") {
+        else if (type == Constants.TYPE_TIMER) {
             return update.timerValue || this.getField("timerValue").value;
         }
         return null;
@@ -362,11 +383,6 @@ var AddActivityModal = React.createClass({
 
     _handleLabelChange: function(event) {
         this.setField("label", event.target.value);
-        return false;
-    },
-
-    _handleTypeClick: function(event) {
-        this.setField("type", event.target.value);
         return false;
     },
 

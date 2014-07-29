@@ -2,6 +2,7 @@
 
 var React = require('react');
 var ActivityActions = require('../actions/ActivityActions');
+var Constants = require('../constants/ActivityConstants');
 var moment = require('moment');
 
 /**
@@ -21,15 +22,15 @@ var ActivityGridItem = React.createClass({
         var updatedText = "never";
 
         switch(activity.type) {
-        case "event":
+        case Constants.TYPE_EVENT:
             typeIconClass = " fa-check-circle-o";
             break;
-        case "duration":
+        case Constants.TYPE_TIMER:
             typeIconClass = " fa-clock-o";
             break;
         }
 
-        if (activity.type == "duration" && activity.currentValue
+        if (activity.type == Constants.TYPE_TIMER && activity.currentValue
             && activity.currentValue.value == true) {
             buttonClass=" active";
         }
@@ -55,10 +56,10 @@ var ActivityGridItem = React.createClass({
         var value = null;
         var activity = this.props.activity;
         switch(activity.type) {
-        case "event":
+        case Constants.TYPE_EVENT:
             value = null;       // NOTE has changed
             break;
-        case "duration":
+        case Constants.TYPE_TIMER:
             value = true;
             if (activity.currentValue) {
                 value = !activity.currentValue.value
