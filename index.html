@@ -10,12 +10,11 @@
 
     <title>Misfire</title>
 
-    <!-- Bootstrap -->
-    <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link href="css/bootstrap-theme.min.css" rel="stylesheet">
+    <link href="lib/bootstrap/css/bootstrap.css" rel="stylesheet">
+    <link href="lib/bootstrap/css/bootstrap-theme.css" rel="stylesheet">
     <!-- <link rel="stylesheet" href="css/bootflat.min.css"/> -->
+    <link href="lib/font-awesome/css/font-awesome.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
-    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -25,107 +24,65 @@
   </head>
   <body>
 
-    <!-- navbar-fixed-top AND body { padding-top: 70px; } -->
-    <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
-      <div class="container-fluid">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-3">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="#">misfire</a>
-          <!-- <p class="navbar-text">... text?</p> -->
-        </div>
-        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-3">
-          <!-- TODO: get button to the right when collapsed (almost hopeless) -->
-          <!-- TODO: get button shown when collapsed (hopeless) -->
-          <!-- <button type="button" class="btn btn-default navbar-btn">Sign in</button> -->
-          <button data-bind="click: beginAdd" type="button" class="btn btn-default navbar-btn" data-toggle="modal" data-target="#add-activity">
-            <span class="glyphicon glyphicon-plus"></span>
-          </button>
-        </div>
-      </div>
-    </nav>
-
-    <div id="main" class="container">
-      <div data-bind="foreach: activities" class="row">
-        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
-          <div class="activity-icon">
-            <i data-bind="visible: type() == 'event'" class="fa fa-check-circle-o"></i>
-            <i data-bind="visible: type() == 'duration'" class="fa fa-clock-o"></i>
-          </div>
-          <button data-bind="click: $parent.doActivity, css: { active: is_active() }"
-                  type="button" class="btn btn-primary btn-lg col-xs-9 activity-btn">
-            <span data-bind="text: name"></span>
-          </button>
-          <p data-bind="text: updated" class="text-right"></p>
-        </div>
-      </div>
+    <div id="main">
     </div>
 
-    <div class="modal fade" id="add-activity" tabindex="-1" role="dialog" aria-labelledby="add-activity-label" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-            <h4 class="modal-title" id="add-activity-label">New activity</h4>
-          </div>
-          <div class="modal-body">
-            <div class="form-group" data-bind="css: { 'has-error': name_error(), 'has-feedback': name_error() }">
-              <label class="control-label" for="add-activity-name">Name</label>
-              <input id="add-activity-name" type="text" data-bind="value: name" class="form-control" placeholder="Name">
-              <span class="glyphicon glyphicon-remove form-control-feedback" data-bind="css: { hidden: !name_error() }"></span>
-            </div>
-
-            <div class="form-group" data-bind="css: { 'has-error': type_error() }">
-              <label class="control-label">Type</label>
-              <div class="row">
-                <div class="col-xs-6">
-                  <label class="btn btn-primary btn-circle center-block" data-bind="css: { active: type() == 'event' }">
-                    <input class="hidden" type="radio" name="type" value="event" id="flat-radio-1" data-bind="checked: type">
-                    <span class="glyphicon glyphicon-ok-circle" />
-                  </label>
-                </div>
-                <div class="col-xs-6">
-                  <label class="btn btn-primary btn-circle center-block" data-bind="css: { active: type() == 'duration' }">
-                    <input class="hidden" type="radio" name="type" value="duration" id="flat-radio-2" data-bind="checked: type">
-                    <span class="glyphicon glyphicon-time" />
-                  </label>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-xs-6">
-                  <h4>Event</h4>
-                  <p>Records things at single points in time. Use it when you only want to know that something happened.</p>
-                </div>
-                <div class="col-xs-6">
-                  <h4>Duration</h4>
-                  <p>Works like and on/off switch. Use it when you want to know how much time something takes.</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="alert alert-danger" data-bind="css: { hidden: !name_error() }">You have to enter a name.</div>
-            <div class="alert alert-danger" data-bind="css: { hidden: !type_error() }">You have to select a type.</div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            <button type="button" data-bind="click: addActivity" class="btn btn-primary">Add</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- <div class="modal fade" id="add-activity" tabindex="-1" role="dialog" aria-labelledby="add-activity-label" aria-hidden="true"> -->
+    <!--   <div class="modal-dialog"> -->
+    <!--     <div class="modal-content"> -->
+    <!--       <div class="modal-header"> -->
+    <!--         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button> -->
+    <!--         <h4 class="modal-title" id="add-activity-label">New activity</h4> -->
+    <!--       </div> -->
+    <!--       <div class="modal-body"> -->
+    <!--         <div class="form-group" data-bind="css: { 'has-error': name_error(), 'has-feedback': name_error() }"> -->
+    <!--           <label class="control-label" for="add-activity-name">Name</label> -->
+    <!--           <input id="add-activity-name" type="text" data-bind="value: name" class="form-control" placeholder="Name"> -->
+    <!--           <span class="glyphicon glyphicon-remove form-control-feedback" data-bind="css: { hidden: !name_error() }"></span> -->
+    <!--         </div> -->
+    <!--         <div class="form-group" data-bind="css: { 'has-error': type_error() }"> - -->
+    <!--           <label class="control-label">Type</label> -->
+    <!--           <div class="row"> -->
+    <!--             <div class="col-xs-6"> -->
+    <!--               <label class="btn btn-primary btn-circle center-block" data-bind="css: { active: type() == 'event' }"> -->
+    <!--                 <input class="hidden" type="radio" name="type" value="event" id="flat-radio-1" data-bind="checked: type"> -->
+    <!--                 <span class="glyphicon glyphicon-ok-circle" /> -->
+    <!--               </label> -->
+    <!--             </div> -->
+    <!--             <div class="col-xs-6"> -->
+    <!--               <label class="btn btn-primary btn-circle center-block" data-bind="css: { active: type() == 'duration' }"> -->
+    <!--                 <input class="hidden" type="radio" name="type" value="duration" id="flat-radio-2" data-bind="checked: type"> -->
+    <!--                 <span class="glyphicon glyphicon-time" /> -->
+    <!--               </label> -->
+    <!--             </div> -->
+    <!--           </div> -->
+    <!--           <div class="row"> -->
+    <!--             <div class="col-xs-6"> -->
+    <!--               <h4>Event</h4> -->
+    <!--               <p>Records things at single points in time. Use it when you only want to know that something happened.</p> -->
+    <!--             </div> -->
+    <!--             <div class="col-xs-6"> -->
+    <!--               <h4>Duration</h4> -->
+    <!--               <p>Works like and on/off switch. Use it when you want to know how much time something takes.</p> -->
+    <!--             </div> -->
+    <!--           </div> -->
+    <!--         </div> -->
+    <!--         <div class="alert alert-danger" data-bind="css: { hidden: !name_error() }">You have to enter a name.</div> -->
+    <!--         <div class="alert alert-danger" data-bind="css: { hidden: !type_error() }">You have to select a type.</div> -->
+    <!--       </div> -->
+    <!--       <div class="modal-footer"> -->
+    <!--         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button> -->
+    <!--         <button type="button" data-bind="click: addActivity" class="btn btn-primary">Add</button> -->
+    <!--       </div> -->
+    <!--     </div> -->
+    <!--   </div> -->
+    <!-- </div> -->
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script src="lib/jquery-1.11.0.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
-    <script src="js/bootstrap.min.js"></script>
-    <script src="js/knockout-3.0.0.js"></script>
-    <script src="js/lodash.min.js"></script>
-    <script src="js/moment.min.js"></script>
-
-    <script src="js/main.js"></script>
+    <script src="lib/bootstrap/js/bootstrap.js"></script>
+    <script src="lib/lodash.min.js"></script>
+    <script src="js/bundle.js"></script>
   </body>
 </html>
