@@ -89,6 +89,8 @@ var TYPE_MISSING = "type-missing";
 var PREDEFINED_TOO_FEW = "predefined-too-few";
 
 /* TODO
+ *   - miss last predefined option when pressing "Create"
+ *   - predefined options input is not cleared on cancen/OK?
  *   - dont clear form on cancel until modal is hidden
  *     Should be done via onCancel callback in parent?
  *     Or in local callback onHidden + wasCancelled state, however then parent
@@ -104,9 +106,13 @@ var AddActivityModal = React.createClass({
 
     mixins: [BootstrapModalMixin, FormMixin],
 
+    propTypes: {
+        onValidated: React.PropTypes.func
+    },
+
     getDefaultProps: function() {
         return {
-            fields: {
+            form: {
                 label: {
                     defaultValue: "",
                     validate: this._validateLabel
@@ -232,21 +238,24 @@ var AddActivityModal = React.createClass({
 
                       <div className="btn-group btn-group-justified">
                         <div className="btn-group btn-group-lg">
-                          <BsSelectButton name="eventValue" value="none"
+                          <BsSelectButton name="eventValue"
+                              value={Constants.VALUE_NONE}
                               selectedValue={eventValue.value}
                               onSelected={this._handleValueSelected}>
                             No
                           </BsSelectButton>
                         </div>
                         <div className="btn-group btn-group-lg">
-                          <BsSelectButton name="eventValue" value="number"
+                          <BsSelectButton name="eventValue"
+                              value={Constants.VALUE_NUMBER}
                               selectedValue={eventValue.value}
                               onSelected={this._handleValueSelected}>
                             Number
                           </BsSelectButton>
                         </div>
                         <div className="btn-group btn-group-lg">
-                          <BsSelectButton name="eventValue" value="predefined"
+                          <BsSelectButton name="eventValue"
+                              value={Constants.VALUE_PREDEFINED}
                               selectedValue={eventValue.value}
                               onSelected={this._handleValueSelected}>
                             Predefined...
@@ -275,21 +284,24 @@ var AddActivityModal = React.createClass({
 
                       <div className="btn-group btn-group-justified">
                         <div className="btn-group btn-group-lg">
-                          <BsSelectButton name="timerValue" value="boolean"
+                          <BsSelectButton name="timerValue"
+                              value={Constants.VALUE_BOOLEAN}
                               selectedValue={timerValue.value}
                               onSelected={this._handleValueSelected}>
                             On / Off
                           </BsSelectButton>
                         </div>
                         <div className="btn-group btn-group-lg">
-                          <BsSelectButton name="timerValue" value="number"
+                          <BsSelectButton name="timerValue"
+                              value={Constants.VALUE_NUMBER}
                               selectedValue={timerValue.value}
                               onSelected={this._handleValueSelected}>
                             Number
                           </BsSelectButton>
                         </div>
                         <div className="btn-group btn-group-lg">
-                          <BsSelectButton name="timerValue" value="predefined"
+                          <BsSelectButton name="timerValue"
+                              value={Constants.VALUE_PREDEFINED}
                               selectedValue={timerValue.value}
                               onSelected={this._handleValueSelected}>
                             Predefined...
@@ -347,10 +359,6 @@ var AddActivityModal = React.createClass({
               </div>
             </div>
         )
-    },
-
-    reset: function() {
-        this.replaceState(this.getInitialState());
     },
 
     _validateLabel: function(label) {
@@ -414,7 +422,7 @@ var AddActivityModal = React.createClass({
 
     _handleCancelClick: function() {
         this.hide();
-        this.reset();
+        this.resetForm();
         return false;
     },
 
@@ -427,9 +435,9 @@ var AddActivityModal = React.createClass({
                 this.getField("predefined").value : null;
             console.debug(label, type, value, predefined);
             this.props.onValidated(label, type, value, predefined);
-
             this.hide();
-            this.reset();
+            this.resetForm();
+            // TODO clear predefined input
         }
         return false;
     }

@@ -4,13 +4,15 @@ var FormMixin = function() {
     return {
         propTypes: {
             // TODO fields: ...
-            onValidated: React.PropTypes.func.isRequired
         },
 
-        getInitialState: function() {
+        _initialFormState: function() {
+            if (!this.props.form) {
+                throw "Missing `form` prop";
+            }
             fields = {};
-            for (var name in this.props.fields) {
-                fieldProp = this.props.fields[name];
+            for (var name in this.props.form) {
+                fieldProp = this.props.form[name];
                 fields[name] = {
                     value: fieldProp.defaultValue,
                     error: null,
@@ -18,8 +20,8 @@ var FormMixin = function() {
                 }
             }
             // TODO catch circular dependencies
-            for (var name in this.props.fields) {
-                fieldProp = this.props.fields[name];
+            for (var name in this.props.form) {
+                fieldProp = this.props.form[name];
                 if (fieldProp.dependencies) {
                     for (var i in fieldProp.dependencies) {
                         dependency = fieldProp.dependencies[i];
@@ -28,8 +30,11 @@ var FormMixin = function() {
                 }
             }
 
-            state = {__form: fields};
-            return state;
+            return {__form: fields};
+        },
+
+        getInitialState: function() {
+            return this._initialFormState();
         },
 
         /** Run field validation function and set/unset error state
@@ -42,11 +47,19 @@ var FormMixin = function() {
             }
 
             var value = fieldState.value;
-            var validator = this.props.fields[fieldName].validate;
+            var validator = this.props.form[fieldName].validate;
             var result = validator ? validator.call(this, value, update) : true;
 
-            fieldState.error = result === true ? null : result;
-            return result === true;
+            // TODO: would be useful to be able to update the value form within
+            // the validator or by some other callback
+            if (result === true) {
+                fieldState.error = null;
+                return true;
+            }
+            else {
+                fieldState.error = result === false ? true : result;
+                return false;
+            }
         },
 
         /** Validate field if it has error state
@@ -102,7 +115,7 @@ var FormMixin = function() {
 
             for (var i in updatedField.dependentFields) {
                 var dependentField = updatedField.dependentFields[i];
-                var compute = this.props.fields[dependentField].compute;
+                var compute = this.props.form[dependentField].compute;
                 if (compute) {
                     this._setField(
                         dependentField, compute.call(this, update), formState);
@@ -110,12 +123,16 @@ var FormMixin = function() {
             }
         },
 
+        resetForm: function() {
+            this.setState(this._initialFormState());
+        },
+
         /** Return current state of given field
          *
          * TODO:
          *   - use getValue / getError instead or strip private stuff
          */
-        getField : function(fieldName) {
+        getField: function(fieldName) {
             return this.state.__form[fieldName];
         },
 
@@ -146,10 +163,10 @@ var FormMixin = function() {
          *   - optimistic validation (success only) green checkbox
          *   - public function can take fieldName?
          */
-        validateForm: function() {
+        validateForm: function(options) {
             var formState = _.cloneDeep(this.state.__form);
             var isValid = true;
-            for (var fieldName in this.props.fields) {
+            for (var fieldName in this.props.form) {
                 isValid = this._validateField(fieldName, formState[fieldName])
                     && isValid;
             }
@@ -162,7 +179,7 @@ var FormMixin = function() {
          */
         renderErrors: function(generateError) {
             var errorItems = [];
-            for (var field in this.props.fields) {
+            for (var field in this.props.form) {
                 var error = this.state.__form[field].error;
                 if (error) {
                     errorItems.push(generateError(field, error));
