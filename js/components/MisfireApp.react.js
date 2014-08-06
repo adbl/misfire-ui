@@ -24,17 +24,19 @@ var MisfireApp = React.createClass({
 
     componentDidMount: function() {
         ActivityStore.addChangeListener(this._onChange);
+        document.body.addEventListener('click', this._handleBodyClick);
     },
 
     componentWillUnmount: function() {
         ActivityStore.removeChangeListener(this._onChange);
+        document.body.removeEventListener('click', this._handleBodyClick);
     },
 
     render: function() {
         return (
           <div>
             <Navbar onAddActivityClick={this._handleAddActivityClick} />
-            <ActivityGrid activities={this.state.activities} />
+            <ActivityGrid ref="grid" activities={this.state.activities} />
             <AddActivityModal ref="add_activity_modal" show={false}
                 onValidated={ActivityActions.newActivity} />
           </div>
@@ -48,8 +50,11 @@ var MisfireApp = React.createClass({
     _handleAddActivityClick: function() {
         this.refs.add_activity_modal.show();
         return false;
-    }
+    },
 
+    _handleBodyClick: function() {
+        this.refs.grid.setFocus(null);
+    }
 });
 
 module.exports = MisfireApp;
