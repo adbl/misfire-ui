@@ -10,27 +10,31 @@ var FormMixin = function() {
             if (!this.props.form) {
                 throw "Missing `form` prop";
             }
-            fields = {};
+            var values = {};
+            var errors = {};
+            var dependees = {};
             for (var name in this.props.form) {
-                fieldProp = this.props.form[name];
-                fields[name] = {
-                    value: fieldProp.defaultValue,
-                    error: null,
-                    dependentFields: []
-                }
+                var fieldProp = this.props.form[name];
+                values[name] = fieldProp.defaultValue;
+                errors[name] = null;
+                dependees[name] = [];
             }
             // TODO catch circular dependencies
             for (var name in this.props.form) {
-                fieldProp = this.props.form[name];
+                var fieldProp = this.props.form[name];
                 if (fieldProp.dependencies) {
                     for (var i in fieldProp.dependencies) {
-                        dependency = fieldProp.dependencies[i];
-                        fields[dependency].dependentFields.push(name);
+                        var dependency = fieldProp.dependencies[i];
+                        dependees[dependency].push(name);
                     }
                 }
             }
 
-            return {__form: fields};
+            return {__form: {
+                values: values,
+                errors: errors,
+                dependees: dependees
+            }};
         },
 
         getInitialState: function() {
@@ -38,54 +42,43 @@ var FormMixin = function() {
         },
 
         /** Run field validation function and set/unset error state
-         *
-         * TODO: can take a field with added `name` attribute
          */
-        _validateField: function(fieldName, fieldState, update) {
-            if (update === undefined) {
-                update = {};
-            }
-
-            var value = fieldState.value;
+        _validateField: function(fieldName, formState) {
+            var value = formState.values[fieldName];
             var validator = this.props.form[fieldName].validate;
-            var result = validator ? validator.call(this, value, update) : true;
+            // TODO maybe clone formState.values
+            var result = validator ? validator.call(this, value, formState.values) : true;
 
             // TODO: would be useful to be able to update the value form within
             // the validator or by some other callback
             if (result === true) {
-                fieldState.error = null;
+                formState.errors[fieldName] = null;
                 return true;
             }
             else {
-                fieldState.error = result === false ? true : result;
+                formState.errors[fieldName] = result === false ? true : result;
                 return false;
             }
         },
 
         /** Validate field if it has error state
-         *
-         * TODO: can take a field with added `name` attribute
          */
-        _revalidateField: function(fieldName, fieldState, update) {
-            var error = fieldState.error;
+        _revalidateField: function(fieldName, formState) {
+            // TODO no more use for update?
+            var error = formState.errors[fieldName];
             if (error) {
-                this._validateField(fieldName, fieldState, update);
+                this._validateField(fieldName, formState);
             }
         },
 
         /** Revalidate dependent fields
          */
         _revalidateDeps: function(fieldName, formState) {
-            var fieldState = formState[fieldName];
-            var dependentFields = fieldState.dependentFields;
-            update = {};
-            update[fieldName] = fieldState.value;
-            for (var i in dependentFields) {
-                var dependentField = dependentFields[i];
+            for (var i in formState.dependees[fieldName]) {
+                var dependentField = formState.dependees[fieldName][i];
                 // TODO maybe not revalidate computed since they are revalidated
                 // if their computer value changes?
-                this._revalidateField(
-                    dependentField, formState[dependentField], update);
+                this._revalidateField(dependentField, formState);
             }
         },
 
@@ -96,30 +89,23 @@ var FormMixin = function() {
         //     }
         // }
 
-        _setField: function(fieldName, value, formState) {
-            var fieldState = formState[fieldName];
-            if (value !== fieldState.value) {
-                fieldState.value = value;
-                this._revalidateField(fieldName, fieldState);
-                this._updateComputed(fieldName, formState);
-                this._revalidateDeps(fieldName, formState);
-            }
-        },
-
-        // TODO pass fieldState around for updates + add name attribute
         _updateComputed: function(updatedFieldName, formState) {
-            var updatedField = formState[updatedFieldName];
-
-            var update = {};
-            update[updatedFieldName] = updatedField.value;
-
-            for (var i in updatedField.dependentFields) {
-                var dependentField = updatedField.dependentFields[i];
+            for (var i in formState.dependees[updatedFieldName]) {
+                var dependentField = formState.dependees[updatedFieldName][i];
                 var compute = this.props.form[dependentField].compute;
                 if (compute) {
                     this._setField(
-                        dependentField, compute.call(this, update), formState);
+                        dependentField, compute(formState.values), formState);
                 }
+            }
+        },
+
+        _setField: function(fieldName, value, formState) {
+            if (value !== formState.values[fieldName]) {
+                formState.values[fieldName] = value;
+                this._revalidateField(fieldName, formState);
+                this._updateComputed(fieldName, formState);
+                this._revalidateDeps(fieldName, formState);
             }
         },
 
@@ -127,19 +113,31 @@ var FormMixin = function() {
             this.setState(this._initialFormState());
         },
 
-        /** Return current state of given field
-         *
-         * TODO:
-         *   - use getValue / getError instead or strip private stuff
+        /** Return current value of given field
+         */
+        getValue: function(fieldName) {
+            return this.state.__form.values[fieldName];
+        },
+
+        /** Return current error of given field, or `null`
+         */
+        getError: function(fieldName) {
+            return this.state.__form.errors[fieldName];
+        },
+
+        /** Return object with `value` and `error` properties of given field
          */
         getField: function(fieldName) {
-            return this.state.__form[fieldName];
+            return {
+                value: this.getValue(fieldName),
+                error: this.getError(fieldName)
+            }
         },
 
         /** Update field value in state and revalidate error state
          *
          * Only one call to this function or validateForm is allowed per event
-         * handler, otherwise the second call will overwrite state changes.
+         * loop, otherwise the second call will overwrite state changes.
          *
          * TODO:
          *   - can take {f1: v1, f2: v2} to allow updating multiple fields
@@ -167,11 +165,10 @@ var FormMixin = function() {
             var formState = _.cloneDeep(this.state.__form);
             var isValid = true;
             for (var fieldName in this.props.form) {
-                isValid = this._validateField(fieldName, formState[fieldName])
-                    && isValid;
+                isValid = this._validateField(fieldName, formState) && isValid;
             }
             this.setState({__form: formState});
-            return isValid;
+            return isValid ? formState.values : false;
         },
 
         /** Call the supplied function for each (field, err)
@@ -180,7 +177,7 @@ var FormMixin = function() {
         renderErrors: function(generateError) {
             var errorItems = [];
             for (var field in this.props.form) {
-                var error = this.state.__form[field].error;
+                var error = this.state.__form.errors[field];
                 if (error) {
                     errorItems.push(generateError(field, error));
                 }

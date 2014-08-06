@@ -115,16 +115,35 @@ var AddActivityModal = React.createClass({
             form: {
                 label: {
                     defaultValue: "",
-                    validate: this._validateLabel
+                    validate: function(label) {
+                        return label ? true : LABEL_MISSING;
+                    }
                 },
-                type: {validate: this._validateType},
+                type: {
+                    validate: function(type) {
+                        return type ? true : TYPE_MISSING;
+                    }
+                },
                 value: {
-                    compute: this._computeValue,
+                    compute: function(form) {
+                        if (form.type == Constants.TYPE_EVENT) {
+                            return form.eventValue;
+                        }
+                        else if (form.type == Constants.TYPE_TIMER) {
+                            return form.timerValue;
+                        }
+                        return null;
+                    },
                     dependencies: ["type", "eventValue", "timerValue"]
                 },
                 predefined: {
                     defaultValue: [],
-                    validate: this._validatePredefinedOptions,
+                    validate: function(predefined, form) {
+                        if (form.value == "predefined" && predefined.length < 2) {
+                            return PREDEFINED_TOO_FEW;
+                        }
+                        return true;
+                    },
                     dependencies: ["value"]
                 },
                 eventValue: {defaultValue: "none"},
@@ -276,7 +295,6 @@ var AddActivityModal = React.createClass({
                       </div>
                     </div>
 
-
                     <div className={"form-group" + (
                         type.value == Constants.TYPE_TIMER ? "" : " hidden")}>
                       <label className="control-label h3">Timer Value</label>
@@ -361,34 +379,6 @@ var AddActivityModal = React.createClass({
         )
     },
 
-    _validateLabel: function(label) {
-        return label ? true : LABEL_MISSING;
-    },
-
-    _validateType: function(type) {
-        return type ? true : TYPE_MISSING;
-    },
-
-    _computeValue: function(update) {
-        // TODO getValue("...")
-        var type = update.type || this.getField("type").value;
-        if (type == Constants.TYPE_EVENT) {
-            return update.eventValue || this.getField("eventValue").value;
-        }
-        else if (type == Constants.TYPE_TIMER) {
-            return update.timerValue || this.getField("timerValue").value;
-        }
-        return null;
-    },
-
-    _validatePredefinedOptions: function(predefined, update) {
-        var value = update.value || this.getField("value").value;
-        if (value == "predefined" && predefined.length < 2) {
-            return PREDEFINED_TOO_FEW;
-        }
-        return true;
-    },
-
     _handleLabelChange: function(event) {
         this.setField("label", event.target.value);
         return false;
@@ -402,7 +392,7 @@ var AddActivityModal = React.createClass({
     _addPredefined: function() {
         var predefined = this.refs.predefinedInput.getDOMNode().value.trim();
         if (predefined) {
-            var options = this.getField("predefined").value;
+            var options = this.getValue("predefined");
             this.setField("predefined", options.concat(predefined));
             this.refs.predefinedInput.getDOMNode().value = '';
         }
@@ -427,14 +417,11 @@ var AddActivityModal = React.createClass({
     },
 
     _handleCreateClick: function() {
-        if (this.validateForm()) {
-            var label = this.getField("label").value.trim();
-            var type = this.getField("type").value;
-            var value = this.getField("value").value;
-            var predefined = value == "predefined" ?
-                this.getField("predefined").value : null;
-            console.debug(label, type, value, predefined);
-            this.props.onValidated(label, type, value, predefined);
+        result = this.validateForm();
+        if (result) {
+            this.props.onValidated(
+                result.label.trim(), result.type, result.value,
+                result.value == "predefined" ? result.predefined : null);
             this.hide();
             this.resetForm();
             // TODO clear predefined input
