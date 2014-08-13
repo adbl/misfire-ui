@@ -88,6 +88,8 @@ var LABEL_MISSING = "label-missing";
 var TYPE_MISSING = "type-missing";
 var PREDEFINED_TOO_FEW = "predefined-too-few";
 
+var PREDEFINED_FORGOT = "predefined-forgot";
+
 /* TODO
  *   - miss last predefined option when pressing "Create"
  *   - predefined options input is not cleared on cancen/OK?
@@ -116,12 +118,12 @@ var AddActivityModal = React.createClass({
                 label: {
                     defaultValue: "",
                     validate: function(label) {
-                        return label ? true : LABEL_MISSING;
+                        return label ? true : {error: LABEL_MISSING};
                     }
                 },
                 type: {
                     validate: function(type) {
-                        return type ? true : TYPE_MISSING;
+                        return type ? true : {error: TYPE_MISSING};
                     }
                 },
                 value: {
@@ -139,36 +141,48 @@ var AddActivityModal = React.createClass({
                 predefined: {
                     defaultValue: [],
                     validate: function(predefined, form) {
-                        if (form.value == "predefined" && predefined.length < 2) {
-                            return PREDEFINED_TOO_FEW;
+                        if (form.value == "predefined") {
+                            if (predefined.length < 2) {
+                                return {error: PREDEFINED_TOO_FEW};
+                            }
+                            else if (form.predefinedInput) {
+                                return {warning: PREDEFINED_FORGOT};
+                            }
                         }
                         return true;
                     },
-                    dependencies: ["value"]
+                    dependencies: ["value", "predefinedInput"]
                 },
+                predefinedInput: {defaultValue: ""},
                 eventValue: {defaultValue: "none"},
                 timerValue: {defaultValue: "boolean"}
             }
         }
     },
 
+    _renderMessage: function(field, message) {
+        var text = null;
+        var href = "#add-activity-group-" + field;
+        switch (message) {
+        case LABEL_MISSING:
+            text = <span>Enter a <a href={href}>label</a> text</span>;
+            break;
+        case TYPE_MISSING:
+            text = <span>Choose activity <a href={href}>type</a></span>;
+            break;
+        case PREDEFINED_TOO_FEW:
+            text = <span>Add at least two <a href={href}>predefined</a> values</span>;
+            break;
+        case PREDEFINED_FORGOT:
+            text = (<span>Did you forget to add the last <a href={href}>predefined</a> value?</span>);
+            break;
+        }
+        return <li key={message}>{text}</li>;
+    },
+
     render: function() {
-        errorItems = this.renderErrors(function(field, error) {
-            var text = null;
-            var href = "#add-activity-group-" + field;
-            switch (error) {
-            case LABEL_MISSING:
-                text = <span>Enter a <a href={href}>label</a> text</span>;
-                break;
-            case TYPE_MISSING:
-                text = <span>Choose activity <a href={href}>type</a></span>;
-                break;
-            case PREDEFINED_TOO_FEW:
-                text = <span>Add at least two <a href={href}>predefined</a> values</span>;
-                break;
-            }
-            return <li key={error}>{text}</li>;
-        });
+        var errorItems = this.renderErrors(this._renderMessage);
+        var warningItems = this.renderWarnings(this._renderMessage);
 
         var label = this.getField("label");
         var type = this.getField("type");
@@ -177,6 +191,7 @@ var AddActivityModal = React.createClass({
         var timerValue = this.getField("timerValue");
         var predefined = this.getField("predefined");
 
+        var predefinedInput = this.getField("predefinedInput");
         var predefinedItems = [];
         for (var i in predefined.value) {
             option = predefined.value[i];
@@ -184,27 +199,30 @@ var AddActivityModal = React.createClass({
         }
 
         return (
-            <div className="modal fade">
+            <div className="modal fade" tabIndex="-1">
               <div className="modal-dialog">
                 <div className="modal-content">
                   <div className="modal-header">
                     {this.renderCloseButton()}
                     <h4 className="modal-title">New Activity</h4>
                   </div>
+                  <form onSubmit={this._handleSubmit} role="form">
+
                   <div className="modal-body">
 
                     <p>An activity is a button that records the time and other
- things when clicked (which is called to <strong>activate</strong>). This allows you to learn more about stuff that happens, like: how often or when does it happen, or how long does it take.</p>
-                    <p>The appearence and behaviour will depend on the options you choose here.</p>
+ things when clicked (which is called to <strong>activate</strong>). This allows
+            you to learn more about things that matter to you. For example, how often or when does it happen, or how long does it take?</p>
 
+                    <p>The appearence and behaviour will depend on the options you choose here.</p>
 
                     <div id="add-activity-group-label" className=
                          {"form-group" + (label.error ?
                                           " has-error has-feedback" : "")} >
                       <label className="control-label h3"
                              htmlFor="add-activity-label">Label <small>- Text that is displayed on the activity button</small></label>
-                      <input type="text" value={label.value}
-                          onChange={this._handleLabelChange}
+                      <input type="text" value={label.value} name="label"
+                          onChange={this._handleInputChange}
                           className="form-control input-lg"
                           id="add-activity-label"
                           placeholder="Activity label text" />
@@ -345,14 +363,17 @@ var AddActivityModal = React.createClass({
                         "form-group" +
                         (value.value == "predefined" ? "" : " hidden") +
                         (predefined.error ?
-                         " has-error has-feedback" : "")}>
+                         " has-error has-feedback" :
+                         (predefined.warning ? " has-warning has-feedback" : ""))}>
                       <label className="control-label h4">Predefined values</label>
                       <ul>
                         {predefinedItems}
                       </ul>
                       <div className="input-group">
-                        <input ref="predefinedInput" type="text"
+                        <input name="predefinedInput" type="text"
+                            value={predefinedInput.value}
                             className="form-control"
+                            onChange={this._handleInputChange}
                             onKeyDown={this._handlePredefinedKeyDown} />
                         <span className="input-group-btn">
                         <button className="btn btn-default" type="button"
@@ -365,23 +386,27 @@ var AddActivityModal = React.createClass({
                                     + (errorItems.length ? "" : " hidden")}>
                       {errorItems}
                     </div>
+                    <div className={"alert alert-warning"
+                                    + (warningItems.length ? "" : " hidden")}>
+                      {warningItems}
+                    </div>
 
                   </div>
                   <div className="modal-footer">
-                    <button type="button" className="btn btn-primary"
-                            onClick={this._handleCreateClick}>Create Activity</button>
+                    <input type="submit" value="Create Activity"
+                        className="btn btn-primary"/>
                     <button type="button" className="btn btn-default"
                             onClick={this._handleCancelClick}>Cancel</button>
                   </div>
+                  </form>
                 </div>
               </div>
             </div>
         )
     },
 
-    _handleLabelChange: function(event) {
-        this.setField("label", event.target.value);
-        return false;
+    _handleInputChange: function(event) {
+        this.setField(event.target.name, event.target.value);
     },
 
     _handleValueSelected: function(selectButton) {
@@ -390,11 +415,13 @@ var AddActivityModal = React.createClass({
     },
 
     _addPredefined: function() {
-        var predefined = this.refs.predefinedInput.getDOMNode().value.trim();
+        var predefined = this.getValue("predefinedInput").trim();
         if (predefined) {
             var options = this.getValue("predefined");
-            this.setField("predefined", options.concat(predefined));
-            this.refs.predefinedInput.getDOMNode().value = '';
+            this.setFields({
+                predefined: options.concat(predefined),
+                predefinedInput: ""
+            });
         }
     },
 
@@ -406,6 +433,7 @@ var AddActivityModal = React.createClass({
     _handlePredefinedKeyDown: function(event) {
         if (event.key == "Enter") {
             this._addPredefined();
+            return false;
         }
         return true;
     },
@@ -416,7 +444,9 @@ var AddActivityModal = React.createClass({
         return false;
     },
 
-    _handleCreateClick: function() {
+    _handleSubmit: function(event) {
+        event.preventDefault();
+
         result = this.validateForm();
         if (result) {
             this.props.onValidated(
@@ -424,7 +454,6 @@ var AddActivityModal = React.createClass({
                 result.value == "predefined" ? result.predefined : null);
             this.hide();
             this.resetForm();
-            // TODO clear predefined input
         }
         return false;
     }

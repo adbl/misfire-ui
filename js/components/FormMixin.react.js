@@ -6,20 +6,66 @@ var FormMixin = function() {
             // TODO fields: ...
         },
 
+        _fieldOrder: function(form) {
+            var frm = form;
+
+            var fields = {};
+            var order = [];
+            for (var name in frm) {
+                order.push(name);
+                fields[name] = {
+                    deps: frm[name].dependencies,
+                    depth: null
+                };
+            }
+            for (var name in frm) {
+                this._calculateDepth(name, fields, {}, 0);
+            }
+
+            order.sort(function(a, b) {
+                return fields[a].depth - fields[b].depth
+            });
+            return order;
+        },
+
+        _calculateDepth: function(name, fields, seen, depth) {
+            if (name in seen) {
+                throw "circular dependency detected for: " + name;
+            }
+            seen[name] = true;
+
+            var deps = fields[name].deps;
+            if (fields[name].depth !== null) {
+                return fields[name].depth;
+            }
+
+            if (deps && deps.length) {
+                depth += 1;
+                var longestDepsDepth = 0;
+                for (var i in deps) {
+                    var depsDepth = this._calculateDepth(deps[i], fields, seen, 0);
+                    if (depsDepth > longestDepsDepth) {
+                        longestDepsDepth = depsDepth;
+                    }
+                }
+                depth += longestDepsDepth;
+            }
+            fields[name].depth = depth;
+            return depth;
+        },
+
         _initialFormState: function() {
             if (!this.props.form) {
                 throw "Missing `form` prop";
             }
+            var order = this._fieldOrder(this.props.form);
             var values = {};
-            var errors = {};
             var dependees = {};
             for (var name in this.props.form) {
                 var fieldProp = this.props.form[name];
                 values[name] = fieldProp.defaultValue;
-                errors[name] = null;
                 dependees[name] = [];
             }
-            // TODO catch circular dependencies
             for (var name in this.props.form) {
                 var fieldProp = this.props.form[name];
                 if (fieldProp.dependencies) {
@@ -31,8 +77,10 @@ var FormMixin = function() {
             }
 
             return {__form: {
+                order: order,
                 values: values,
-                errors: errors,
+                errors: {},
+                warnings: {},
                 dependees: dependees
             }};
         },
@@ -41,55 +89,84 @@ var FormMixin = function() {
             return this._initialFormState();
         },
 
+        _withFields: function(fn, formState, fieldsObject) {
+            if (fieldsObject === undefined) {
+                // TODO risk bcause referencing this.state.__form?
+                fieldsObject = this.getFields();
+            }
+
+            for (var i in formState.order) {
+                var fieldName = formState.order[i];
+                if (fieldName in fieldsObject) {
+                    // TODO bind or not?
+                    fn.call(this, fieldName, fieldsObject[fieldName]);
+                }
+            }
+        },
+
         /** Run field validation function and set/unset error state
          */
-        _validateField: function(fieldName, formState) {
+        _validateField: function(fieldName, ignoreSameWarning, formState) {
             var value = formState.values[fieldName];
             var validator = this.props.form[fieldName].validate;
             // TODO maybe clone formState.values
-            var result = validator ? validator.call(this, value, formState.values) : true;
+            var result = validator ?
+                validator.call(this, value, formState.values) : true;
 
             // TODO: would be useful to be able to update the value form within
             // the validator or by some other callback
             if (result === true) {
-                formState.errors[fieldName] = null;
-                return true;
+                result = {};
+            }
+            else if (result === false) {
+                result = {error: true};
+            }
+
+            if (ignoreSameWarning && result.warning &&
+                result.warning === formState.warnings[fieldName]) {
+                console.debug("ignoring same warning", fieldName, result.warning);
+                delete result.warning;
+            }
+
+            if (result.error) {
+                formState.errors[fieldName] = result.error;
             }
             else {
-                formState.errors[fieldName] = result === false ? true : result;
-                return false;
+                delete formState.errors[fieldName];
             }
+
+            if (result.warning) {
+                formState.warnings[fieldName] = result.warning;
+            }
+            else {
+                delete formState.warnings[fieldName];
+            }
+
+            return result;
         },
 
         /** Validate field if it has error state
          */
         _revalidateField: function(fieldName, formState) {
-            // TODO no more use for update?
-            var error = formState.errors[fieldName];
-            if (error) {
-                this._validateField(fieldName, formState);
+            if (formState.errors[fieldName] || formState.warnings[fieldName]) {
+                this._validateField(fieldName, false, formState);
             }
         },
 
         /** Revalidate dependent fields
          */
         _revalidateDeps: function(fieldName, formState) {
+            // TODO use _withFields?
             for (var i in formState.dependees[fieldName]) {
                 var dependentField = formState.dependees[fieldName][i];
-                // TODO maybe not revalidate computed since they are revalidated
-                // if their computer value changes?
-                this._revalidateField(dependentField, formState);
+                if (!this.props.form[dependentField].compute) {
+                    this._revalidateField(dependentField, formState);
+                }
             }
         },
 
-        // TODO do this or use underscore?
-        // _withDependentFields: function(field, formState, action) {
-        //     for (var i in field.dependentFields) {
-        //         action.call(this, formState[field.dependentFields[i]]);
-        //     }
-        // }
-
         _updateComputed: function(updatedFieldName, formState) {
+            // TODO use _withFields?
             for (var i in formState.dependees[updatedFieldName]) {
                 var dependentField = formState.dependees[updatedFieldName][i];
                 var compute = this.props.form[dependentField].compute;
@@ -109,6 +186,14 @@ var FormMixin = function() {
             }
         },
 
+        _setFields: function(change, formState) {
+            this._withFields(function(fieldName, newValue) {
+                this._setField(fieldName, newValue, formState);
+            }, formState, change)
+        },
+
+        /** Reset form to initial state
+         */
         resetForm: function() {
             this.setState(this._initialFormState());
         },
@@ -119,10 +204,16 @@ var FormMixin = function() {
             return this.state.__form.values[fieldName];
         },
 
-        /** Return current error of given field, or `null`
+        /** Return current error of given field, or `undefined`
          */
         getError: function(fieldName) {
             return this.state.__form.errors[fieldName];
+        },
+
+        /** Return current warning of given field, or `undefined`
+         */
+        getWarning: function(fieldName) {
+            return this.state.__form.warnings[fieldName];
         },
 
         /** Return object with `value` and `error` properties of given field
@@ -130,43 +221,79 @@ var FormMixin = function() {
         getField: function(fieldName) {
             return {
                 value: this.getValue(fieldName),
-                error: this.getError(fieldName)
+                error: this.getError(fieldName),
+                warning: this.getWarning(fieldName)
             }
+        },
+
+        /** Return object with field names as keys and `getField()` as value
+         */
+        getFields: function(formState) {
+            var fieldsObject = {};
+            for (var fieldName in this.props.form) {
+                fieldsObject[fieldName] = this.getField(fieldName);
+            }
+            return fieldsObject;
         },
 
         /** Update field value in state and revalidate error state
          *
-         * Only one call to this function or validateForm is allowed per event
-         * loop, otherwise the second call will overwrite state changes.
+         * Only one call to this function, setFields or validateForm is allowed
+         * per event loop, otherwise the second call will overwrite state
+         * changes.
          *
          * TODO:
-         *   - can take {f1: v1, f2: v2} to allow updating multiple fields
-         *   - updateValue takes function(currentValue) { return newValue },
-         *     setValue takes value
+         *   - value can be a function which takes current value
          */
         setField: function(fieldName, value) {
+            var change = {};
+            change[fieldName] = value;
+            this.setFields(change);
+        },
+
+        /** Update field values in state and revalidate error state
+         *
+         * Only one call to this function, setField or validateForm is allowed
+         * per event loop, otherwise the second call will overwrite state
+         * changes.
+         *
+         * TODO:
+         * - only revalidate a field once per setFields operation.
+         */
+        setFields: function(change) {
+            // TODO check change is an object
             var formState = _.cloneDeep(this.state.__form);
-            this._setField(fieldName, value, formState);
+            this._setFields(change, formState);
             this.setState({__form: formState});
         },
 
         /** Validate all fields and return the grand result
          *
+         * Return `false` if some field has error or warning, otherwise return
+         * object with field names as keys and their validated values.
+         *
+         * A field with the same warning for two consecutive calls will be valid
+         * the second call.
+         *
          * Only one call to this function or setField is allowed per event
          * handler, otherwise the second call will overwrite state changes.
          *
          * TODO:
-         *   - Interface could be more explicit and not touch this.state or
-         *     setState at all, (node-formidable?)
+         *   - Explicit handling of form state, supports multiple calls per
+         *     event loop
          *   - optimistic validation (success only) green checkbox
          *   - public function can take fieldName?
          */
-        validateForm: function(options) {
+        validateForm: function() {
             var formState = _.cloneDeep(this.state.__form);
             var isValid = true;
-            for (var fieldName in this.props.form) {
-                isValid = this._validateField(fieldName, formState) && isValid;
-            }
+
+            this._withFields(function(fieldName) {
+                var fieldResult = this._validateField(
+                    fieldName, true, formState);
+                isValid = isValid && !fieldResult.error && !fieldResult.warning;
+            }, formState);
+
             this.setState({__form: formState});
             return isValid ? formState.values : false;
         },
@@ -177,12 +304,26 @@ var FormMixin = function() {
         renderErrors: function(generateError) {
             var errorItems = [];
             for (var field in this.props.form) {
-                var error = this.state.__form.errors[field];
+                var error = this.getError(field);
                 if (error) {
                     errorItems.push(generateError(field, error));
                 }
             }
             return errorItems;
+        },
+
+        /** Call the supplied function for each (field, warning)
+         * Return the list of generated errors
+         */
+        renderWarnings: function(generateWarning) {
+            var warningItems = [];
+            for (var field in this.props.form) {
+                var warning = this.getWarning(field);
+                if (warning) {
+                    warningItems.push(generateWarning(field, warning));
+                }
+            }
+            return warningItems;
         }
     }
 }()
