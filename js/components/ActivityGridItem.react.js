@@ -14,21 +14,39 @@ var ActivityIcon = React.createClass({
     },
 
     render: function() {
-        var typeIconClass = "";
         switch(this.props.type) {
         case Constants.TYPE_EVENT:
-            typeIconClass = " fa-check-circle-o";
+            return this._typeIcon("fa-check-circle-o");
             break;
         case Constants.TYPE_TIMER:
-            typeIconClass = " fa-clock-o";
+            return this._typeIcon("fa-clock-o");
             break;
+        case Constants.VALUE_NUMBER:
+            return (<span>¹²³ </span>);
+        default:
+            return null;
         }
+    },
 
-        return (
-            <div className="activity-icon">
-              <i className={"fa" + typeIconClass}></i>
-            </div>
-        )
+    _typeIcon: function(icon) {
+        return (<span><i className={"fa " + icon}></i> </span>);
+    }
+});
+
+var ActivityUpdatedStatus = React.createClass({
+
+    propTypes: {
+        timestamp: React.PropTypes.instanceOf(Date)
+    },
+
+    render: function() {
+        if (!this.props.timestamp) {
+            return null;
+        }
+        else {
+            var updated = moment(this.props.timestamp).fromNow();
+            return (<span>activated {updated}</span>);
+        }
     }
 
 });
@@ -44,12 +62,10 @@ var ActivityGridItem = React.createClass({
     render: function() {
         var activity = this.props.activity;
 
-        var updatedText = "never";
-        if (activity.currentValue) {
-            updatedText = moment(activity.currentValue.timestamp).fromNow();
-        }
+        var updatedTimestamp = activity.currentValue ?
+            activity.currentValue.timestamp : null;
 
-        var activeValue;
+        var activeValue = null;
         if (activity.type == Constants.TYPE_TIMER && activity.currentValue) {
             activeValue = activity.currentValue.value;
         }
@@ -86,11 +102,20 @@ var ActivityGridItem = React.createClass({
         }
 
         return (
-          <div className={"col-xs-12 col-sm-6 col-md-4 col-lg-3" +
+          <div className={"activity-item col-xs-12 col-sm-6 col-md-4 col-lg-3" +
                           (fade ? " fade" : "")}>
-            <ActivityIcon type={activity.type} />
             {button}
-            <p className="text-right">{updatedText}</p>
+            <div>
+              <div className="activity-icons">
+                <ActivityIcon type={activity.type} />
+                <ActivityIcon type={activity.value} />
+              </div>
+              <div className="text-right">
+                <small>
+                  <ActivityUpdatedStatus timestamp={updatedTimestamp}/>
+                </small>
+              </div>
+            </div>
           </div>
         )
     },

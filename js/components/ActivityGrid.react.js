@@ -25,13 +25,22 @@ var ActivityGrid = React.createClass({
             )
             numAdded++;
             if (numAdded % 2 == 0) {
-                activityNodes.push(<div className="clearfix visible-sm-block" />)
+                activityNodes.push(
+                    <div key={numAdded.toString() + "-sm"}
+                        className="clearfix visible-sm-block" />
+                )
             }
             if (numAdded % 3 == 0) {
-                activityNodes.push(<div className="clearfix visible-md-block" />)
+                activityNodes.push(
+                    <div key={numAdded.toString() + "-md"}
+                        className="clearfix visible-md-block" />
+                )
             }
             if (numAdded % 4 == 0) {
-                activityNodes.push(<div className="clearfix visible-lg-block" />)
+                activityNodes.push(
+                    <div key={numAdded.toString() + "-lg"}
+                        className="clearfix visible-lg-block" />
+                )
             }
         }
         return (

@@ -1,3 +1,7 @@
+body {
+    background-color: #E6E9ED;
+}
+
 .btn-circle {
   width: 90px;
   height: 90px;
@@ -12,11 +16,20 @@
     border: solid red 1px;
 }
 
+.activity-item {
+    padding-bottom: 10px;
+}
+
 .activity-btn {
-    width: -moz-calc(100% - 40px);
-    width: -webkit-calc(100% - 40px);
-    width: calc(100% - 40px);
+    width: 100%;
+    /* width: -moz-calc(100% - 40px); */
+    /* width: -webkit-calc(100% - 40px); */
+    /* width: calc(100% - 40px); */
  }
+
+.activity-icons {
+    float: left;
+}
 
 .activity-icon {
     font-size: 32px;

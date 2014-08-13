@@ -122,8 +122,8 @@ var Number = React.createClass({
     render: function() {
         isActive = this.props.hasFocus;
         var number = this.getField("number");
-        var activeValueString = this.props.activeValue ? ": " +
-            this.props.activeValue : "";
+        var activeValueString = this.props.activeValue !== null ?
+            ": " + this.props.activeValue.toString() : "";
         return (
             <div>
               <button type="button" className={
