@@ -48,6 +48,7 @@ var OnOff = React.createClass({
 
     _handleClick: function() {
         this.props.onAddValue(!this.props.activeValue);
+        return false;
     }
 });
 
@@ -89,6 +90,7 @@ var Predefined = React.createClass({
 
     _handleClick: function(event) {
         this.props.onAddValue(event.target.value);
+        return false;
     }
 
 });
@@ -136,7 +138,7 @@ var Number = React.createClass({
 
               <div className={"input-group input-group-lg activity-btn" +
                   (isActive ? (number.error ? " has-error has-feedback" : "")
-                   : " hidden")}>
+                   : " hidden")} onClick={this._handleOtherClick}>
                 <input type="number" ref="input" value={number.value}
                     onChange={this._handleInputChange}
                     onKeyDown={this._handleInputKeyDown}
@@ -147,7 +149,7 @@ var Number = React.createClass({
                         "addon-feedback-lg" + (number.error ? "" : " hidden")}>
                 </span>
                 <div className="input-group-btn">
-                  <button type="button" onClick={this._handleAddValue}
+                  <button type="button" onClick={this._handleAddClick}
                     className="btn btn-primary">
                     <span className="glyphicon glyphicon-ok" />
                   </button>
@@ -157,15 +159,28 @@ var Number = React.createClass({
         )
     },
 
+    _addValue: function() {
+        result = this.validateForm();
+        if (result) {
+            this.props.onAddValue(parseFloat(result.number));
+            this.resetForm();
+            this.props.onFocus(false);
+        }
+    },
+
     componentDidUpdate: function(prevProps, prevState) {
         if (this.props.hasFocus) {
             this.refs.input.getDOMNode().focus();
         }
     },
 
-    _handleActivityClick: function() {
+    _handleActivityClick: function(event) {
         this.props.onFocus(true);
         return false;
+    },
+
+    _handleOtherClick: function() {
+        return false; // so we don't loose focus
     },
 
     _handleInputChange: function(event) {
@@ -175,18 +190,14 @@ var Number = React.createClass({
 
     _handleInputKeyDown: function(event) {
         if (event.key == "Enter") {
-            this._handleAddValue();
+            this._addValue();
         }
         return true;
     },
 
-    _handleAddValue: function() {
-        result = this.validateForm();
-        if (result) {
-            this.props.onAddValue(parseFloat(result.number));
-            this.resetForm();
-            this.props.onFocus(false);
-        }
+    _handleAddClick: function() {
+        this._addValue();
+        return false;
     },
 });
 

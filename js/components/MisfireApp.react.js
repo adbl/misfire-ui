@@ -24,17 +24,18 @@ var MisfireApp = React.createClass({
 
     componentDidMount: function() {
         ActivityStore.addChangeListener(this._onChange);
-        document.body.addEventListener('click', this._handleBodyClick);
+        // Captures, React bug?
+        // document.body.addEventListener('click', this._handleBodyClick, true);
     },
 
     componentWillUnmount: function() {
         ActivityStore.removeChangeListener(this._onChange);
-        document.body.removeEventListener('click', this._handleBodyClick);
+        // document.body.removeEventListener('click', this._handleBodyClick, true);
     },
 
     render: function() {
         return (
-          <div>
+          <div onClick={this._handleClick}>
             <Navbar onAddActivityClick={this._handleAddActivityClick} />
             <ActivityGrid ref="grid" activities={this.state.activities} />
             <AddActivityModal ref="add_activity_modal" show={false}
@@ -52,7 +53,7 @@ var MisfireApp = React.createClass({
         return false;
     },
 
-    _handleBodyClick: function() {
+    _handleClick: function(event) {
         this.refs.grid.setFocus(null);
     }
 });
