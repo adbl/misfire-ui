@@ -5,6 +5,7 @@ var ActivityActions = require('../actions/ActivityActions');
 var Constants = require('../constants/ActivityConstants');
 var moment = require('moment');
 
+var ActivityPropMixin = require('./ActivityPropMixin.react');
 var ActivityButton = require('./ActivityButton.react');
 
 var ActivityIcon = React.createClass({
@@ -35,17 +36,38 @@ var ActivityIcon = React.createClass({
 
 var ActivityUpdatedStatus = React.createClass({
 
-    propTypes: {
-        timestamp: React.PropTypes.instanceOf(Date)
-    },
+    mixins: [ActivityPropMixin],
 
     render: function() {
-        if (!this.props.timestamp) {
+        if (!this.hasValue()) {
             return null;
         }
         else {
-            var updated = moment(this.props.timestamp).fromNow();
-            return (<span>activated {updated}</span>);
+            var updated = moment(this.latestTimestamp()).fromNow();
+            var status;
+            if (this.activityType() == 'event') {
+                var value;
+                switch (this.activityValue()) {
+                case Constants.VALUE_NONE:
+                    status = "active";
+                    break;
+                case Constants.VALUE_NUMBER:
+                    value = (
+                        <span className="activity-number-value">
+                          {this.latestValue().toString()}
+                        </span>
+                    );
+                    break;
+                case Constants.VALUE_PREDEFINED:
+                    value = this.latestValue().toString();
+                    break;
+                }
+                status = status || (<span>{value} -</span>);
+            }
+            else {
+                status = "changed";
+            }
+            return (<span>{status} {updated}</span>);
         }
     }
 
@@ -61,9 +83,6 @@ var ActivityGridItem = React.createClass({
 
     render: function() {
         var activity = this.props.activity;
-
-        var updatedTimestamp = activity.currentValue ?
-            activity.currentValue.timestamp : null;
 
         var activeValue = null;
         if (activity.type == Constants.TYPE_TIMER && activity.currentValue) {
@@ -112,7 +131,7 @@ var ActivityGridItem = React.createClass({
               </div>
               <div className="text-right">
                 <small>
-                  <ActivityUpdatedStatus timestamp={updatedTimestamp}/>
+                  <ActivityUpdatedStatus activity={activity}/>
                 </small>
               </div>
             </div>
