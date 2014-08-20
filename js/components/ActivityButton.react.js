@@ -113,19 +113,30 @@ var Number = React.createClass({
                 number: {
                     defaultValue: "",
                     validate: function(number) {
-                        console.debug(number);
-                        return parseFloat(number) !== NaN;
+                        return !isNaN(parseFloat(number));
                     }
                 }
             }
         }
     },
 
+    componentWillReceiveProps: function(nextProps) {
+        if (nextProps.activeValue) {
+            this.setField("number", nextProps.activeValue.toString());
+        }
+    },
+
     render: function() {
-        isActive = this.props.hasFocus;
+        var isActive = this.props.hasFocus;
         var number = this.getField("number");
-        var activeValueString = this.props.activeValue !== null ?
-            ": " + this.props.activeValue.toString() : "";
+        var activeValue = null;
+        if (this.props.activeValue !== null) {
+            activeValue = (
+                <span>: <span className="activity-number-value">
+                  {this.props.activeValue.toString()}
+                </span></span>
+            );
+        }
         return (
             <div>
               <button type="button" className={
@@ -133,7 +144,7 @@ var Number = React.createClass({
                       (isActive ? " hidden" : "")}
                   disabled={this.props.disabled}
                   onClick={this._handleActivityClick}>
-                <span>{this.props.name + activeValueString}</span>
+                <span>{this.props.name}{activeValue}</span>
               </button>
 
               <div className={"input-group input-group-lg activity-btn" +
@@ -159,12 +170,16 @@ var Number = React.createClass({
         )
     },
 
+    _reset: function() {
+        this.resetForm();
+        this.props.onFocus(false);
+    },
+
     _addValue: function() {
         result = this.validateForm();
         if (result) {
             this.props.onAddValue(parseFloat(result.number));
-            this.resetForm();
-            this.props.onFocus(false);
+            this._reset();
         }
     },
 
@@ -191,6 +206,9 @@ var Number = React.createClass({
     _handleInputKeyDown: function(event) {
         if (event.key == "Enter") {
             this._addValue();
+        }
+        else if (event.key == "Escape") {
+            this._reset();
         }
         return true;
     },

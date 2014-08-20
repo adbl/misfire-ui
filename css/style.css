@@ -41,6 +41,10 @@ body {
     float: left;
 }
 
+.activity-number-value {
+    font-family: monospace;
+}
+
 .h3-label-feedback {
     top: 56px;
 }
