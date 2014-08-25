@@ -171,6 +171,7 @@ var Number = React.createClass({
     },
 
     _reset: function() {
+        this.refs.input.getDOMNode().blur();
         this.resetForm();
         this.props.onFocus(false);
     },
