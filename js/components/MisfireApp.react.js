@@ -26,6 +26,9 @@ var MisfireApp = React.createClass({
         ActivityStore.addChangeListener(this._onChange);
         // Captures, React bug?
         // document.body.addEventListener('click', this._handleBodyClick, true);
+
+        // Mobile WebKit issue: https://github.com/facebook/react/issues/1169
+        this.getDOMNode().onclick = function() {}
     },
 
     componentWillUnmount: function() {

@@ -53,8 +53,15 @@ var ActivityGrid = React.createClass({
     },
 
     setFocus: function(item) {
-        var focused = item ? item.props.key : null;
-        this.setState({focusedItemKey: focused});
+        if (!item && this.state.focusedItemKey) {
+            this.setState({focusedItemKey: null});
+            return true;
+        }
+        else if (item && item.props.key !== this.state.focusedItemKey) {
+            this.setState({focusedItemKey: item.props.key});
+            return true;
+        }
+        return false;
     }
 
 });
