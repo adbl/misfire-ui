@@ -51,9 +51,15 @@ body {
 
 .addon-feedback-lg {
     top: 7px;
-    right: 75px;
+    right: 55px;
 }
 
 .fade {
     opacity: 0.5;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
