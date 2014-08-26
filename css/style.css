@@ -63,3 +63,11 @@ input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
+
+.btn:focus {
+    background-position: 0 0px;
+}
+
+/* .btn-group>.btn:focus, .btn-group-vertical>.btn:focus { */
+/*     outline: none; */
+/* } */
