@@ -43,7 +43,7 @@ var ActivityUpdatedStatus = React.createClass({
             return null;
         }
         else {
-            var updated = moment(this.latestTimestamp()).fromNow();
+            var updated = this.latestTimestamp().fromNow();
             var status;
             if (this.activityType() == 'event') {
                 var value;
@@ -144,7 +144,7 @@ var ActivityGridItem = React.createClass({
     },
 
     _addValue: function(value) {
-        ActivityActions.addValue(this.props.activity.id, new Date(), value);
+        ActivityActions.addValue(this.props.activity.id, moment(), value);
     },
 
 });
