@@ -6,6 +6,7 @@ var Constants = require('../constants/ActivityConstants');
 var moment = require('moment');
 
 var ActivityPropMixin = require('./ActivityPropMixin.react');
+var ActivityLinks = require('./ActivityLinks.react');
 var ActivityButton = require('./ActivityButton.react');
 
 var ActivityIcon = React.createClass({
@@ -78,7 +79,9 @@ var ActivityGridItem = React.createClass({
     propTypes: {
         activity: React.PropTypes.object.isRequired,
         hasFocus: React.PropTypes.bool,
-        onFocus: React.PropTypes.func.isRequired
+        onFocus: React.PropTypes.func.isRequired,
+        hasLinks: React.PropTypes.bool,
+        onToggleLinks: React.PropTypes.func.isRequired
     },
 
     render: function() {
@@ -121,20 +124,25 @@ var ActivityGridItem = React.createClass({
         }
 
         return (
-          <div className={"activity-item col-xs-12 col-sm-6 col-md-4 col-lg-3" +
+          <div className={"col-xs-12 col-sm-6 col-md-4 col-lg-3" +
                           (fade ? " fade" : "")}>
-            {button}
-            <div>
-              <div className="activity-icons">
-                <ActivityIcon type={activity.type} />
-                <ActivityIcon type={activity.value} />
+                <ActivityLinks activity={this.props.activity}
+                    visible={this.props.hasLinks}
+                    onToggle={this.props.onToggleLinks} />
+            <div className="activity-item">
+              {button}
+              <div>
+                <div className="activity-icons">
+                  <ActivityIcon type={activity.type} />
+                  <ActivityIcon type={activity.value} />
+                </div>
+                <div className="text-right">
+                  <small>
+                    <ActivityUpdatedStatus activity={activity}/>
+                  </small>
+                </div>
               </div>
-              <div className="text-right">
-                <small>
-                  <ActivityUpdatedStatus activity={activity}/>
-                </small>
               </div>
-            </div>
           </div>
         )
     },

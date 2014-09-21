@@ -57,7 +57,7 @@ var MisfireApp = React.createClass({
     },
 
     _handleClick: function(event) {
-        this.refs.grid.setFocus(null);
+        this.refs.grid.deselect();
     }
 });
 

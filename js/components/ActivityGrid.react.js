@@ -6,7 +6,9 @@ var ActivityGridItem = require('./ActivityGridItem.react');
 var ActivityGrid = React.createClass({
 
     getInitialState: function() {
-        return { focusedItemKey: null };
+        return { focusedItemKey: null,
+                 showLinksActivityId: null
+               };
     },
 
     render: function() {
@@ -15,13 +17,15 @@ var ActivityGrid = React.createClass({
         var numAdded = 0;
         for (var id in activities) {
             activity = activities[id];
-            var hasFocus = null;
-            if (this.state.focusedItemKey) {
-                hasFocus = id === this.state.focusedItemKey;
-            }
+            // ternary
+            var hasFocus = this.state.focusedItemKey ?
+                id === this.state.focusedItemKey : null;
             activityNodes.push(
                 <ActivityGridItem activity={activity} key={id}
-                    hasFocus={hasFocus} onFocus={this.setFocus} />
+                    hasFocus={hasFocus}
+                    onFocus={this._setFocus}
+                    hasLinks={id === this.state.showLinksActivityId}
+                    onToggleLinks={this._toggleLinks} />
             )
             numAdded++;
             if (numAdded % 2 == 0) {
@@ -52,7 +56,20 @@ var ActivityGrid = React.createClass({
         )
     },
 
-    setFocus: function(item) {
+    deselect: function() {
+        this._setFocus(null);
+        this._toggleLinks(null);
+    },
+
+    _toggleLinks: function(activityId) {
+        if (activityId === this.state.showLinksActivityId) {
+            activityId = null;
+        }
+        this.setState({showLinksActivityId: activityId});
+    },
+
+    _setFocus: function(item) {
+        // TODO why all this?
         if (!item && this.state.focusedItemKey) {
             this.setState({focusedItemKey: null});
             return true;
